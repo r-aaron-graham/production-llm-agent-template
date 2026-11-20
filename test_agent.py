@@ -1,4 +1,7 @@
 import unittest
+import subprocess
+import sys
+from pathlib import Path
 from agent import execute
 
 
@@ -22,6 +25,13 @@ class ToolGatewayTests(unittest.TestCase):
                          {"tool": "lookup", "arguments": {"topic": "x", "extra": 1}}):
             with self.subTest(proposal=proposal), self.assertRaises(ValueError):
                 execute(proposal, {"lookup"})
+
+    def test_cli_rejects_invalid_json(self):
+        script = str(Path(__file__).with_name("agent.py"))
+        for proposal in ("{", "[" * 2000, "x" * 4097):
+            result = subprocess.run([sys.executable, script, "--proposal", proposal], capture_output=True, text=True)
+            self.assertEqual(result.returncode, 2)
+            self.assertNotIn("Traceback", result.stderr)
 
     def test_no_match(self):
         result = execute({"tool": "lookup", "arguments": {"topic": "unknown"}}, {"lookup"})
