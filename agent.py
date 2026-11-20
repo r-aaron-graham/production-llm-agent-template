@@ -27,9 +27,11 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--proposal", default='{"tool":"lookup","arguments":{"topic":"setup"}}')
     args = parser.parse_args()
+    if len(args.proposal) > 4096:
+        parser.exit(2, "Proposal exceeds 4096 characters\n")
     try:
         result = execute(json.loads(args.proposal), {"lookup"})
-    except ValueError as exc:
+    except (ValueError, RecursionError) as exc:
         parser.exit(2, f"Invalid proposal: {exc}\n")
     print(json.dumps(result, indent=2))
 
